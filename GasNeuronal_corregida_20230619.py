@@ -76,40 +76,48 @@ neuronas = np.zeros((num_neu, n)) #2*14
 num_epochs = 10
 h = np.zeros((1,num_neu)) #1*2 matriz donde guardare las distancias
 neuronas = pd.concat([BaseAumentada.quantile(.25), BaseAumentada.quantile(.75)], axis=1).T.values #2*30
-eta_0 = 0.1
+eta_0 = 1
 eta_f = 0.0001
 
 rho_0 = 1
-rho_f = 0.0001  # num_neu / num_epochs / 2  #0.375
+rho_f = 0.0001
 
 count_cluster0 = 0
 count_cluster1 = 0
 
 for k in range(num_epochs):
     for i in range(0,  m):
-        for j in range(0, 1):
+        for j in range(0, 2):
             vector_xi = base[i,:]
             neurona_yj = neuronas[j,:]
 
             # Calculamos distancias y obtenemos el indice de la distancia menor
             dist = norm(neuronas-vector_xi, axis=1, ord=2)
-            min_val = np.argmin(dist) #0
+            dist_rankeadas = np.argsort(dist)
+            min_dist = np.argmin(dist)
 
             #calculo de funciones que necesitamos para actualizar la formula que actualiza las neuronas
-            eta_t = eta_0 * (eta_f / eta_0)**(i / m) #learning rate
-            rho_t = rho_0 * (rho_f / rho_0)**(i / m) #neighborhood width
+            eta_t = eta_0 * (eta_f / eta_0)**(i / m)  # learning rate
+            rho_t = rho_0 * (rho_f / rho_0)**(i / m)  # neighborhood width
 
-            if 0 == min_val :
-                r =0
-                h_r = np.exp(- r / rho_t)  # h(r) = exp(- r / rho_t) , donde r_k(t)
-                neuronas[0, :] = neuronas[0, :] + eta_t * h_r * (base[i, :] - neuronas[0, :])
+            lst_hr = []
+            for r_i in dist_rankeadas:
+                h_r = np.exp(- r_i / rho_t)
+                lst_hr.append(h_r)
+
+            # distancia, distancias ordenadas, valor de hr con base a los valores anteriores
+            valores_neurona = np.matrix([dist , dist_rankeadas, np.array(lst_hr)])
+            # print(valores_neurona)
+
+            h_r_neu_0 = valores_neurona[-1,0]
+            neuronas[0, :] = neuronas[0, :] + eta_t * h_r_neu_0 * (base[i, :] - neuronas[0, :])
+            if min_dist == 0 :
                 count_cluster0 = count_cluster0 +1
                 pertenencia[i] = 0
 
-            if 1 == min_val :
-                r=0
-                h_r = np.exp(- r / rho_t)  # h(r) = exp(- r / rho_t) , donde r_k(t)
-                neuronas[1, :] = neuronas[1, :] + eta_t * h_r * (base[i, :] - neuronas[1, :])
+            h_r_neu_1 = valores_neurona[-1, 1]
+            neuronas[1, :] = neuronas[1, :] + eta_t * h_r_neu_1 * (base[i, :] - neuronas[1, :])
+            if min_dist == 1 :
                 count_cluster1 = count_cluster1 +1
                 pertenencia[i] = 1
 
@@ -121,20 +129,10 @@ print('count_cluster1', count_cluster1 )
 
 resultado = pd.Series(pertenencia).value_counts()
 print(resultado)
-# 0.0    22237
-# 1.0     7925
 
-# 0.0    22425
-# 1.0     7737
 cf = confusion_matrix(y, pertenencia)
 print(cf)
-# [[16582  6072]
-#  [ 5655  1853]]
 
-# [[16726  5928]
-#  [ 5699  1809]]
 tn, fp, fn, tp =  cf.ravel()
 acc = (tn + tp) / (m)
 
-# acc 61% con num_epochs = 4
-# acc 61% con num_epochs = 10
