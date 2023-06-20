@@ -87,13 +87,16 @@ count_cluster1 = 0
 
 for k in range(num_epochs):
     for i in range(0,  m):
-        for j in range(0, 2):
+        for j in range(0, 2): #num de nueronas
             vector_xi = base[i,:]
             neurona_yj = neuronas[j,:]
 
             # Calculamos distancias y obtenemos el indice de la distancia menor
             dist = norm(neuronas-vector_xi, axis=1, ord=2)
-            dist_rankeadas = np.argsort(dist)
+            temp = dist.argsort()
+            ranks = np.empty_like(temp)
+            ranks[temp] = np.arange(len(dist))
+            dist_rankeadas = ranks
             min_dist = np.argmin(dist)
 
             #calculo de funciones que necesitamos para actualizar la formula que actualiza las neuronas
@@ -135,4 +138,4 @@ print(cf)
 
 tn, fp, fn, tp =  cf.ravel()
 acc = (tn + tp) / (m)
-
+print(acc)
