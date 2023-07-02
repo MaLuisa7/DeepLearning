@@ -72,7 +72,7 @@ for k in range(3):
 ###
 resultado = pd.Series(pertenencia).value_counts()
 
-print(resultado)
+print(resultado) #
 # 1.0    13793
 # 2.0    10845
 # 3.0     3113
